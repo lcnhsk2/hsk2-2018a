@@ -9,9 +9,10 @@
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#eaf4ff,#f8f2ff 55%,#fff7e8);color:var(--ink);font-family:Arial,"Microsoft YaHei",sans-serif;min-height:100vh}
 header{padding:22px 18px 16px;text-align:center;background:linear-gradient(110deg,#173f78,#2869b2 55%,#5b54a5);color:white;box-shadow:0 5px 22px #1c3d6633}
 header h1{margin:0;font-size:clamp(22px,4vw,34px);letter-spacing:1px}header p{margin:8px 0 0;color:#e4efff}
-.shell{max-width:1080px;margin:22px auto;padding:0 14px 36px}
-.tabs{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.tab{border:0;border-radius:14px;padding:13px 22px;background:#dce7f5;color:#53657c;font-size:17px;font-weight:800;cursor:pointer;flex:1;min-width:125px}
+.shell{max-width:1280px;margin:22px auto;padding:0 14px 36px}
+.workspace{display:grid;grid-template-columns:235px minmax(0,1fr);gap:18px;align-items:start}
+.tabs{display:flex;flex-direction:column;gap:10px;position:sticky;top:16px;margin:0}
+.tab{border:0;border-radius:14px;padding:17px 16px;background:#dce7f5;color:#53657c;font-size:17px;font-weight:800;cursor:pointer;width:100%;text-align:left;min-height:58px}
 .tab.active{background:linear-gradient(120deg,#2563eb,#4f46e5);color:white;box-shadow:0 7px 16px #315bba35}
 .tab:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.5)}
 .panel,.card{background:var(--paper);border-radius:22px;box-shadow:0 12px 35px #24466d12;border:1px solid #e3ebf5}
@@ -49,17 +50,15 @@ header h1{margin:0;font-size:clamp(22px,4vw,34px);letter-spacing:1px}header p{ma
 .review-item{border:1px solid #e1e9f3;border-radius:16px;padding:16px;margin:12px 0;background:#fff}
 .review-item h3{margin:0 0 9px}.answer{font-weight:800;color:#157347}.wrong{color:#b91c1c}.review-item p{line-height:1.65;margin:7px 0}
 .footer{text-align:center;color:#8a9aab;font-size:12px;margin-top:24px}
-@media(max-width:620px){.rules,.results{grid-template-columns:1fr}.choices{grid-template-columns:1fr}.tab{padding:12px 8px;font-size:15px}.prompt{font-size:18px}.visual{max-height:300px}.start{padding:25px 16px}}
+.question-brand{margin:24px 0 2px;padding:11px 14px;border-radius:11px;background:#edf4ff;color:#24538b;text-align:center;font-size:13px;font-weight:900;letter-spacing:.6px;border:1px solid #d8e6fa}
+.content-column{min-width:0}
+@media(max-width:700px){.workspace{grid-template-columns:1fr;gap:12px}.tabs{position:static;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.tab{font-size:13px;text-align:center;padding:12px 5px;min-height:52px}.content-column{min-width:0}}
+@media(max-width:620px){.rules,.results{grid-template-columns:1fr}.choices{grid-template-columns:1fr}.prompt{font-size:18px}.visual{max-height:300px}.start{padding:25px 16px}}
 </style>
 </head>
 <body>
 <header><h1>HSK 二级 · 试卷二</h1><p>模拟考试互动 · 听力 Listening · 阅读 Reading · 复习 Review</p></header>
 <div class="shell">
-  <div class="tabs" id="tabs" style="display:none">
-    <button class="tab active" id="tabL" onclick="showTab('L')">听力 · Listening</button>
-    <button class="tab" id="tabR" disabled onclick="showTab('R')">阅读 · Reading 🔒</button>
-    <button class="tab" id="tabV" disabled onclick="showTab('V')">复习 · Review 🔒</button>
-  </div>
   <section class="panel start" id="startScreen">
     <div class="hero">🎧 📚 🏆</div>
     <h2>HSK 二级模拟挑战</h2>
@@ -72,6 +71,13 @@ header h1{margin:0;font-size:clamp(22px,4vw,34px);letter-spacing:1px}header p{ma
     <div class="notice">⏱️ Total waktu maksimal 47 menit. Tab 阅读 terkunci saat 听力 berlangsung. Setelah 听力 selesai, tab tersebut akan terbuka. Setelah 阅读 dimulai, tab 听力 terkunci.</div>
     <button class="primary" onclick="startExam()">开始考试 · Mulai Ujian</button>
   </section>
+  <div class="workspace" id="workspace" style="display:none">
+    <nav class="tabs" id="tabs" aria-label="Navigasi bagian ujian">
+      <button class="tab active" id="tabL" onclick="showTab('L')">🎧 听力 · Listening</button>
+      <button class="tab" id="tabR" disabled onclick="showTab('R')">📖 阅读 · Reading 🔒</button>
+      <button class="tab" id="tabV" disabled onclick="showTab('V')">📝 复习 · Review 🔒</button>
+    </nav>
+    <div class="content-column">
   <section class="panel" id="examPanel" style="display:none">
     <div class="status">
       <span class="pill" id="phaseLabel">听力 · Listening</span>
@@ -101,6 +107,8 @@ header h1{margin:0;font-size:clamp(22px,4vw,34px);letter-spacing:1px}header p{ma
     <div id="reviewContent"></div>
     <button class="secondary" onclick="location.reload()">Ulangi Simulasi</button>
   </section>
+    </div>
+  </div>
   <div class="footer">Materi dan kunci jawaban mengikuti HSK 二级（试卷二） pada PDF yang diunggah.</div>
 </div>
 <script>
@@ -116,7 +124,7 @@ function startExam(){
   // Shuffle answer-option order only for questions 21–35; option IDs remain attached to their original answers.
   lOrder=lOrder.map(q=>q.n>=21?({...q,opts:q.opts?shuffle(q.opts):q.opts}):q);
   rOrder=[...shuffle(RDATA.slice(0,5)),...shuffle(RDATA.slice(5,10)),...shuffle(RDATA.slice(10,15)),...shuffle(RDATA.slice(15,20)),...shuffle(RDATA.slice(20,25))];
-  $('startScreen').style.display='none';$('tabs').style.display='flex';$('examPanel').style.display='block';
+  $('startScreen').style.display='none';$('workspace').style.display='grid';$('tabs').style.display='flex';$('examPanel').style.display='block';
   phase='L';li=0;seconds=25*60;render();startTimer();speakCurrent();
 }
 function startTimer(){clearInterval(timerId);timerId=setInterval(()=>{seconds--;updateTimer();if(seconds<=0){clearInterval(timerId);if(phase==='L')startReading(true);else submitAll(true)}},1000);updateTimer()}
@@ -141,7 +149,7 @@ function render(){
     if(q.type==='tf') html+=choiceHTML([['T','✓ Benar'],['F','✕ Salah']],lAnswers[q.n]);
     else if(q.type==='pic6'||q.type==='pic5') html+=`<p class="subprompt">Pilih gambar A–${q.type==='pic6'?'F':'E'} yang sesuai dengan percakapan.</p>`+choiceHTML(Array.from({length:q.type==='pic6'?6:5},(_,i)=>[String.fromCharCode(65+i),'Gambar '+String.fromCharCode(65+i)]),lAnswers[q.n]);
     else html+=choiceHTML(q.opts,lAnswers[q.n]);
-    html+=`<div style="display:flex;gap:9px;flex-wrap:wrap"><button class="secondary" onclick="playAudio()">▶ Putar audio soal ${q.n}</button><button class="secondary" onclick="toggleTranscript()">👁 Lihat teks audio</button></div><div class="transcript" id="transcript"><div class="hanzi">${q.s}</div><div class="pinyin">${q.p}</div><p>${q.id}</p></div>`;
+    html+=`<div style="display:flex;gap:9px;flex-wrap:wrap"><button class="secondary" onclick="playAudio()">▶ Putar audio soal ${q.n}</button><button class="secondary" onclick="toggleTranscript()">👁 Lihat teks audio</button></div><div class="transcript" id="transcript"><div class="hanzi">${q.s}</div></div>`;
   }else{
     if(q.kind==='pic'){
       html+=`<p class="prompt">${q.s}</p><img class="visual" src="${q.visual}" alt="Pilihan gambar A sampai F dari PDF">`;
@@ -157,6 +165,7 @@ function render(){
       html+=choiceHTML(q.opts,rAnswers[q.n]);
     }
   }
+  html+=`<div class="question-brand">lcnpalembang-08994477998</div>`;
   $('questionArea').innerHTML=html;
 }
 function choiceHTML(opts,selected){
@@ -202,6 +211,7 @@ function submitAll(timeout){
 }
 function showTab(t){
  if(t==='R'&&(!lDone||submitted))return;
+ if(t==='L'&&lDone)return;
  if(t==='V'&&(!submitted||(scoreL+scoreR)/60<.9))return;
  $('examPanel').style.display='none';$('resultPanel').style.display='none';$('reviewPanel').style.display='none';
  $('tabL').classList.toggle('active',t==='L');$('tabR').classList.toggle('active',t==='R');$('tabV').classList.toggle('active',t==='V');
